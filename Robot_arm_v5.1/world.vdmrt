@@ -1,0 +1,43 @@
+class World
+
+operations
+
+    -- scenario 1 : simple no optimization
+    public scenario1 : () ==> (seq of (real * real * real))
+    scenario1 () == (
+        RobotSystem`Robot.setFinalSimTime(10e9);
+        RobotSystem`Robot_controller.setTarget(3.14/4);
+        RobotSystem`Robot_controller.setKPvalue(0.4);
+        RobotSystem`Robot_controller.setKDvalue(1);
+        RobotSystem`Robot.setMotorState(<ON>);
+
+        start(RobotSystem`Robot_arm_motor);
+        start(RobotSystem`Robot_arm_sensor);
+        start(RobotSystem`Robot_controller);
+
+        RobotSystem`Robot.isFinished();
+
+
+        return RobotSystem`Robot.state_history;
+    ); 
+
+    -- scenario 2 : optimized for speeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeed!
+    public scenario2 : () ==> (seq of (real * real * real))
+    scenario2 () == (
+        RobotSystem`Robot.setFinalSimTime(10e9);
+        RobotSystem`Robot_controller.setTarget(3.14/4);
+        RobotSystem`Robot_controller.setKPvalue(12.5);
+        RobotSystem`Robot_controller.setKDvalue(5.2);
+        RobotSystem`Robot.setMotorState(<ON>);
+
+        start(RobotSystem`Robot_arm_motor);
+        start(RobotSystem`Robot_arm_sensor);
+        start(RobotSystem`Robot_controller);
+
+        RobotSystem`Robot.isFinished();
+
+
+        return RobotSystem`Robot.state_history;
+    ); 
+
+end World

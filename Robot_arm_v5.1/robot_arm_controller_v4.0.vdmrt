@@ -1,0 +1,116 @@
+class Robot_arm_controller
+
+types 
+    
+    public OperationMode = <initialisation> | <normal> | <emergency>;
+
+instance variables
+
+    private ctl_q : real;
+    private ctl_qt : real;
+    private ctl_motor_state: Robot_arm`MotorState;
+    private ctl_mode : OperationMode;
+    private ctl_error : real;
+    private ctl_derror : real;
+    private ctl_gravity_torque : real;
+    private last_time : real;
+    private K_p : real;
+    private K_d : real;
+
+values 
+
+    N1 : real = 0.0;
+    N2 : real = 3.14/2;
+    Q_em : real = 0.01; -- error margin
+    M1 : real = N1 + Q_em;
+    M2 : real = N2 + Q_em;
+    mass : real = 1.2;
+    gravity : real = -9.81;
+    radius : real = 0.8;
+    inertia : real = 0.5 * mass * radius * radius;
+
+thread
+    periodic (0.125e8, 0, 0, 0)(loop);
+
+
+operations
+
+    public Robot_arm_controller : () ==> Robot_arm_controller
+    Robot_arm_controller() == (
+        ctl_q := 0.0; -- angle of joint
+        ctl_qt := 0.0; -- Target angle of joint
+        ctl_motor_state := <OFF>;
+        ctl_mode := <initialisation>;
+        ctl_error := 0.0;
+        ctl_derror := 0.0;
+        last_time := 0.0;
+        K_p := 0.0;
+        K_d := 0.0;
+        ctl_gravity_torque := mass * gravity * radius * MATH`cos(ctl_q); -- Torque from gravity
+    );
+
+    public setMode : (OperationMode) ==> ()
+    setMode (m) == duration (1e7) ( -- 0.1 sec
+        ctl_mode := m;
+    );
+
+    public setMotorState : (Robot_arm`MotorState) ==> ()
+    setMotorState (s) == duration (1e7) ( -- 0.1 sec
+        RobotSystem`Robot_arm_motor.setMotorState(s);
+        ctl_motor_state := RobotSystem`Robot.getMotorState();
+    );
+
+    public setTarget : real ==> ()
+    setTarget (target) == duration (1e7) ( -- 0.1 sec
+        if (target >= N1 and target <= N2) then
+            ctl_qt := target;
+            ctl_error := ctl_qt - ctl_q;
+    );
+
+    public setKPvalue : (real) ==> ()
+    setKPvalue (kp) == duration (0) ( -- 0.1 sec
+        K_p := kp;
+    );
+
+    public setKDvalue : (real) ==> ()
+    setKDvalue (kd) == duration (0) ( -- 0.1 sec
+        K_d := kd;
+    );
+
+    public monitorArm : () ==> ()
+    monitorArm () == duration (0.1e3) ( -- 0.1 sec
+        ctl_q := RobotSystem`Robot_arm_sensor.getArmAngle();
+        -- if (ctl_q >= M1 and ctl_q <= M2) then
+        --     setMode(<normal>)
+        -- else 
+        --     setMode(<emergency>);
+    );
+
+    public ensureSafeArmPosition : () ==> ()
+    ensureSafeArmPosition () == duration (5e7) (-- 0.5 sec
+        if (ctl_mode = <emergency>) then
+            RobotSystem`Robot_arm_motor.setMotorState(<OFF>);
+    );
+
+    public controlArm : () ==> ()
+    controlArm () == duration (1e3) ( -- 0.5 sec
+        dcl torque : real;
+        dcl t : real := time/1e9;
+        dcl delta_t : real := t - last_time;
+        last_time := t;
+        
+        ctl_gravity_torque := mass * gravity * radius * MATH`cos(ctl_q); -- Torque from gravity
+        ctl_derror := (( ctl_qt - ctl_q) - ctl_error ) / delta_t;
+        ctl_error := ctl_qt - ctl_q;
+        torque := K_p * ctl_error + K_d * ctl_derror - ctl_gravity_torque;
+        -- ensureSafeArmPosition();
+        RobotSystem`Robot_arm_motor.setMotorTorque(torque);
+    );
+
+    private loop : () ==> ()
+    loop () == (
+        monitorArm();
+        controlArm();
+    );
+
+end Robot_arm_controller

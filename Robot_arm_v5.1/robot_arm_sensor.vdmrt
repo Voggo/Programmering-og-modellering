@@ -1,0 +1,30 @@
+class robot_arm_sensor
+
+instance variables
+    private sens_qe : real;
+
+thread
+    periodic (0.1e7, 0, 0, 0.05e9)(monitorArm); -- 0.01 sec
+
+sync
+    mutex(monitorArm, getArmAngle);
+    
+operations
+
+    public robot_arm_sensor : () ==> robot_arm_sensor
+    robot_arm_sensor() == (
+        sens_qe := 0.0;
+    );
+
+    public monitorArm : () ==> ()
+    monitorArm() == duration(0.5e6)( -- 0.05 sec
+        sens_qe := RobotSystem`Robot.getArmAngle();
+    );
+
+    public getArmAngle : () ==> real
+    getArmAngle() == duration(0.01e7)( -- 0.01 sec
+        return sens_qe;
+    );
+    
+
+end robot_arm_sensor

@@ -1,0 +1,107 @@
+class World
+
+operations
+
+    -- scenario 1 : 
+    public scenario1 : () ==> (seq of (real * real * real))
+    scenario1 () == (
+        RobotSystem`Robot.setFinalSimTime(15e9);
+        RobotSystem`Robot_controller.setTarget(3.14/4);
+        RobotSystem`Robot_controller.setKPvalue(0.15);
+        RobotSystem`Robot_controller.setKDvalue(0.0);
+        RobotSystem`Robot_controller.setKIvalue(0.00);
+
+
+        RobotSystem`Robot.setMotorState(<ON>);
+
+        start(RobotSystem`Robot_arm_motor);
+        start(RobotSystem`Robot_arm_sensor);
+        start(RobotSystem`Robot_controller);
+
+        RobotSystem`Robot.isFinished();
+
+
+        return RobotSystem`Robot.state_history;
+    ); 
+
+    -- Scenario 2 : KP = 0.05 faster response more oversving, bad if close to borders N1 and N2.
+    public scenario2 : () ==> (seq of (real * real * real))
+    scenario2 () == (
+        RobotSystem`Robot.setFinalSimTime(50e9);
+        RobotSystem`Robot_controller.setTarget(3.14/4);
+        RobotSystem`Robot_controller.setKPvalue(0.01);
+        RobotSystem`Robot.setMotorState(<ON>);
+
+        start(RobotSystem`Robot_arm_motor);
+        start(RobotSystem`Robot_arm_sensor);
+        start(RobotSystem`Robot_controller);
+        start(RobotSystem`Robot);
+        
+
+        RobotSystem`Robot.isFinished();
+
+        return RobotSystem`Robot.state_history;
+    ); 
+
+    -- Scenario 3 : KP = 0.1 faster response even more oversving, bad if close to borders N1 and N2.
+    public scenario3 : () ==> (seq of (real * real * real))
+    scenario3 () == (
+        RobotSystem`Robot.setFinalSimTime(100e9);
+        RobotSystem`Robot_controller.setTarget(3.14/4);
+        RobotSystem`Robot_controller.setKPvalue(0.1);
+        RobotSystem`Robot.setMotorState(<ON>);
+
+        start(RobotSystem`Robot_arm_motor);
+        start(RobotSystem`Robot_arm_sensor);
+        start(RobotSystem`Robot_controller);
+        start(RobotSystem`Robot);
+
+        RobotSystem`Robot.isFinished();
+
+        return RobotSystem`Robot.state_history;
+    ); 
+
+    public scenario4 : () ==> (seq of (real * real * real))
+    scenario4 () == (
+        RobotSystem`Robot.setFinalSimTime(85e9);
+        RobotSystem`Robot_controller.setTarget(3.14/4);
+        RobotSystem`Robot_controller.setKPvalue(0.02);
+        RobotSystem`Robot.setMotorState(<ON>);
+
+        RobotSystem`Robot.addEvent(1e9, <motorFailure>, 0);
+        RobotSystem`Robot.addEvent(25e9, <motorRepair>, 0);
+        -- RobotSystem`Robot.addEvent(49e9, <motorRepair>, 0);
+
+        start(RobotSystem`Robot_arm_motor);
+        start(RobotSystem`Robot_arm_sensor);
+        start(RobotSystem`Robot_controller);
+        start(RobotSystem`Robot);
+
+        RobotSystem`Robot.isFinished();
+
+
+        return RobotSystem`Robot.state_history;
+    ); 
+
+    public scenario5 : () ==> (seq of (real * real * real))
+    scenario5 () == (
+        RobotSystem`Robot.setFinalSimTime(70e9);
+        RobotSystem`Robot_controller.setTarget(3.14/4);
+        RobotSystem`Robot_controller.setKPvalue(0.02);
+        RobotSystem`Robot.setMotorState(<ON>);
+
+        RobotSystem`Robot.addEvent(10e9, <armStuck>, 0);
+        RobotSystem`Robot.addEvent(20e9, <armUnstuck>, 0);
+
+        start(RobotSystem`Robot_arm_motor);
+        start(RobotSystem`Robot_arm_sensor);
+        start(RobotSystem`Robot_controller);
+        start(RobotSystem`Robot);
+
+        RobotSystem`Robot.isFinished();
+
+
+        return RobotSystem`Robot.state_history;
+    );
+
+end World
